@@ -1,24 +1,30 @@
-import { Directive, ElementRef, HostListener, Input, OnInit } from '@angular/core';
+import { Directive, ElementRef, HostListener, input, effect, inject } from '@angular/core';
 import { FocusKeyManager } from '@angular/cdk/a11y';
 
 @Directive({
   selector: '[appKeyManager]',
   standalone: true
 })
-export class KeyManagerDirective implements OnInit {
-  @Input() items: any[] = [];
+export class KeyManagerDirective {
+  items = input<any[]>([]);
   private keyManager!: FocusKeyManager<any>;
+  private elementRef = inject(ElementRef);
 
-  constructor(private elementRef: ElementRef) {}
-
-  ngOnInit(): void {
-    this.keyManager = new FocusKeyManager(this.items)
-      .withWrap()
-      .withHomeAndEnd();
+  constructor() {
+    effect(() => {
+      const currentItems = this.items();
+      if (currentItems.length > 0) {
+        this.keyManager = new FocusKeyManager(currentItems)
+          .withWrap()
+          .withHomeAndEnd();
+      }
+    });
   }
 
   @HostListener('keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
-    this.keyManager.onKeydown(event);
+    if (this.keyManager) {
+      this.keyManager.onKeydown(event);
+    }
   }
 }
